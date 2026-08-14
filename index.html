@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just Breathe - Box Breathing Timer & Calm Routine</title>
+    <meta name="description" content="A calm, distraction-free box breathing timer. Use the 4-4-4-4 method to quiet your mind, lower stress, and find your focus in minutes.">
+    <meta name="keywords" content="box breathing timer, square breathing, 4-4-4-4 technique, stress relief, mindfulness tool">
+
+    <style>
+        :root {
+            --bg-color: #030712;
+            --accent: #5eead4;
+            --circle-color: rgba(94, 234, 212, 0.25);
+            --card-bg: #0f172a;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: white;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--circle-color) 0%, rgba(13, 148, 136, 0.1) 50%, transparent 80%);
+            filter: blur(50px);
+            opacity: 0.8;
+            transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Top Bar Container for Controls */
+        .top-bar {
+            position: absolute;
+            top: 1.5rem;
+            display: flex;
+            gap: 0.8rem;
+            z-index: 20;
+            align-items: center;
+        }
+
+        /* Control Buttons / Tabs */
+        .control-tab {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            backdrop-filter: blur(8px);
+            transition: 0.2s;
+            outline: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .control-tab:hover, .control-tab.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* App Wrapper for Fullscreen Immersive View */
+        .app-fullscreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            padding-top: 100px;
+        }
+
+        /* Panels Container positioned safely below the top bar */
+        .panels-container {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        /* Hidden Settings Panel / Language Panel */
+        .panel {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.2rem;
+            border-radius: 16px;
+            display: none;
+            gap: 0.8rem;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+        }
+
+        .panel.active {
+            display: flex;
+        }
+
+        .setting-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .setting-group select {
+            background: #0f172a;
+            color: var(--accent);
+            border: 1px solid rgba(94, 234, 212, 0.3);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        /* Language Grid for Language Tab */
+        .lang-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.4rem;
+        }
+
+        .lang-btn {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.4rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            text-align: center;
+        }
+
+        .lang-btn:hover, .lang-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(94, 234, 212, 0.05);
+        }
+
+        #session-time {
+            font-size: 0.85rem;
+            letter-spacing: 0.15rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 1.5rem;
+            height: 1rem;
+            text-transform: uppercase;
+        }
+
+        #instruction {
+            font-size: 1.8rem;
+            letter-spacing: 0.4rem;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 30px rgba(94, 234, 212, 0.6);
+        }
+
+        /* Visualizer Rings with Organic Easing */
+        .visualizer {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ring-1 {
+            width: 200px;
+            height: 200px;
+            border: 2px solid rgba(94, 234, 212, 0.4);
+            box-shadow: 0 0 25px rgba(94, 234, 212, 0.2) inset;
+        }
+
+        .ring-2 {
+            width: 140px;
+            height: 140px;
+            border: 2px dashed rgba(244, 114, 182, 0.4);
+        }
+
+        .ring-3 {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(94, 234, 212, 0.3) 0%, rgba(13, 148, 136, 0.1) 100%);
+            border: 2px solid rgba(94, 234, 212, 0.7);
+            box-shadow: 0 0 40px rgba(94, 234, 212, 0.4);
+        }
+
+        #timer {
+            position: relative;
+            z-index: 5;
+            font-size: 3.5rem;
+            font-weight: 200;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        .controls {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        button.action-btn {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.9rem;
+            letter-spacing: 0.1rem;
+        }
+
+        button.action-btn:hover {
+            background: var(--accent);
+            color: black;
+            box-shadow: 0 0 20px rgba(94, 234, 212, 0.4);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* SEO Content & Article Section */
+        .seo-content-wrapper {
+            background-color: var(--bg-color);
+            color: #d1d5db;
+            padding: 4rem 1.5rem;
+            display: flex;
+            justify-content: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            z-index: 10;
+        }
+
+        .seo-content {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .seo-content h2 {
+            color: var(--accent);
+            font-size: 1.6rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .seo-content p {
+            line-height: 1.7;
+            margin-bottom: 1.2rem;
+            font-size: 1.05rem;
+        }
+
+        .seo-content ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .seo-content li {
+            margin-bottom: 0.8rem;
+            line-height: 1.6;
+        }
+
+        .ad-container {
+            text-align: center;
+            margin: 1.5rem 0;
+            min-height: 90px;
+        }
+
+        /* Additional Pages Styles (About & Privacy) */
+        .page-view {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-color);
+            z-index: 100;
+            overflow-y: auto;
+            padding: 5rem 1.5rem 3rem 1.5rem;
+            box-sizing: border-box;
+        }
+
+        .page-view.active {
+            display: block;
+        }
+
+        .page-content {
+            max-width: 700px;
+            margin: 0 auto;
+            color: #d1d5db;
+            line-height: 1.8;
+        }
+
+        .page-content h1 {
+            color: var(--accent);
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-content h2 {
+            color: var(--accent);
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .page-content p {
+            margin-bottom: 1.2rem;
+        }
+
+        .back-home-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+            transition: 0.2s;
+            display: inline-block;
+        }
+
+        .back-home-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2.5rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9rem;
+            background-color: #02040a;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            z-index: 10;
+        }
+
+        footer .footer-links {
+            margin-top: 0.8rem;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        footer .footer-links a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        footer .footer-links a:hover {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow" id="glow"></div>
+
+    <!-- Immersive Timer Screen -->
+    <div class="app-fullscreen" id="homeView">
+        <!-- Top Navigation Tabs / Actions -->
+        <div class="top-bar" id="topBar">
+            <button class="control-tab icon-btn" id="settingsToggle" onclick="togglePanel('settings')" title="Settings">⚙</button>
+            <button class="control-tab" id="langToggle" onclick="togglePanel('lang')">🌐 Language</button>
+        </div>
+
+        <div class="container">
+            <!-- Panels Container positioned safely -->
+            <div class="panels-container">
+                <!-- Settings Panel -->
+                <div class="panel" id="settingsPanel">
+                    <div class="setting-group">
+                        <label for="durationSelect" id="labelDuration" data-translate="labelDuration">Session length:</label>
+                        <select id="durationSelect" onchange="updateDuration()">
+                            <option value="120" data-translate="dur2">2 minutes</option>
+                            <option value="300" selected data-translate="dur5">5 minutes</option>
+                            <option value="600" data-translate="dur10">10 minutes</option>
+                            <option value="999999" data-translate="durInf">No limit</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label for="timingSelect" id="labelTiming" data-translate="labelTiming">Breathing pace:</label>
+                        <select id="timingSelect" onchange="updateTiming()">
+                            <option value="3" data-translate="rit3">3 sec (Relaxed)</option>
+                            <option value="4" selected data-translate="rit4">4 sec (Standard)</option>
+                            <option value="6" data-translate="rit6">6 sec (Deep)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Language Panel / Tab Content -->
+                <div class="panel" id="langPanel">
+                    <div class="lang-grid">
+                        <button class="lang-btn active" onclick="changeLanguage('en', this)">English</button>
+                        <button class="lang-btn" onclick="changeLanguage('es', this)">Español</button>
+                        <button class="lang-btn" onclick="changeLanguage('zh-TW', this)">繁體中文</button>
+                        <button class="lang-btn" onclick="changeLanguage('zh-CN', this)">简体中文</button>
+                        <button class="lang-btn" onclick="changeLanguage('ja', this)">日本語</button>
+                        <button class="lang-btn" onclick="changeLanguage('ko', this)">한국어</button>
+                        <button class="lang-btn" onclick="changeLanguage('ar', this)">العربية</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="session-time"></div>
+            <div id="instruction" data-translate="ready">Ready?</div>
+            
+            <div class="visualizer">
+                <div class="ring ring-1" id="ring1"></div>
+                <div class="ring ring-2" id="ring2"></div>
+                <div class="ring ring-3" id="ring3"></div>
+                <div id="timer">---</div>
+            </div>
+
+            <div class="controls">
+                <button class="action-btn" id="mainBtn" onclick="handleMainAction()" data-translate="beginBtn">Start breathing</button>
+                <button class="action-btn hidden" id="pauseBtn" onclick="togglePause()" data-translate="pauseBtn">Pause</button>
+                <button class="action-btn hidden" id="restartBtn" onclick="restartSession()" data-translate="restartBtn">Restart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEO Content Section -->
+    <div class="seo-content-wrapper">
+        <div class="seo-content">
+            <h2 data-translate="sec1Title">What is box breathing?</h2>
+            <p data-translate="sec1Text">Box breathing is a simple, highly effective technique to reset your nervous system when things feel overwhelming. By breaking your breath down into four equal parts—inhaling, holding, exhaling, and holding again—it brings your mind back to the present moment and helps settle racing thoughts.</p>
+            
+            <h2 data-translate="sec3Title">Why take a moment to breathe?</h2>
+            <p data-translate="sec3Text">Life moves fast, and it's easy to live in a state of low-key tension without realizing it. Taking just a few minutes out of your day for guided breathing sends a clear signal to your body that it's safe to slow down, lowering stress and clearing out mental clutter instantly.</p>
+
+            <h2 data-translate="sec2Title">How the 4-4-4-4 technique works</h2>
+            <p data-translate="sec2Text">You don't need any special gear or experience. Just follow the visual rings on your screen through these four simple steps:</p>
+            <ol>
+                <li><strong data-translate="step1Name">Inhale:</strong> <span data-translate="step1Desc">Breathe in steadily through your nose, filling your lungs completely for four seconds.</span></li>
+                <li><strong data-translate="step2Name">Hold:</strong> <span data-translate="step2Desc">Keep the air comfortably inside your lungs for another four seconds.</span></li>
+                <li><strong data-translate="step3Name">Exhale:</strong> <span data-translate="step3Desc">Release the air smoothly and gently through your mouth over four seconds.</span></li>
+                <li><strong data-translate="step4Name">Hold:</strong> <span data-translate="step4Desc">Pause with empty lungs for four seconds before starting the next round.</span></li>
+            </ol>
+
+            <div class="ad-container">
+                <!-- Ad space placeholder -->
+            </div>
+        </div>
+    </div>
+
+    <!-- About Page View -->
+    <div class="page-view" id="aboutView">
+        <div class="page-content">
+            <button class="back-home-btn" onclick="showHome()">← Back to Timer</button>
+            <h1 data-translate="aboutTitle">About Just Breathe</h1>
+            <p data-translate="aboutP1">Just Breathe was created with a singular mission: to provide a completely clean, distraction-free space where anyone can pause, reset, and center their mind within seconds.</p>
+            <p data-translate="aboutP2">In a world full of constant notifications, rushing schedules, and digital noise, taking a controlled pause is one of the most powerful tools available for mental wellness. The box breathing technique (or 4-4-4-4 method) has been used for decades by elite performers, meditators, and wellness practitioners to regulate the nervous system and regain clarity.</p>
+            <h2 data-translate="aboutH2">Our Philosophy</h2>
+            <p data-translate="aboutP3">We believe mindfulness tools should be effortless to access. No sign-ups, no clutter, no intrusive paywalls—just open the app, follow the visual rhythm, and find your peace.</p>
+        </div>
+    </div>
+
+    <!-- Privacy Policy View -->
+    <div class="page-view" id="privacyView">
+        <div class="page-content">
+            <button class="back-home-btn" onclick="showHome()">← Back to Timer</button>
+            <h1 data-translate="privacyTitle">Privacy Policy</h1>
+            <p data-translate="privacyP1">Last updated: June 2026</p>
+            <p data-translate="privacyP2">At Just Breathe, your privacy is our utmost priority. Because our application functions entirely client-side to help you relax, we operate under a strict philosophy of data minimization.</p>
+            
+            <h2 data-translate="privacyH1">Information We Do Not Collect</h2>
+            <p data-translate="privacyP3">We do not collect, store, or process any personal data, health metrics, or breathing session histories on external servers. Your usage of the timer stays entirely on your device.</p>
+
+            <h2 data-translate="privacyH2">Cookies and Analytics</h2>
+            <p data-translate="privacyP4">We may use basic, privacy-respecting analytical tools to measure general traffic numbers and improve our website's performance. These tools do not track you across other websites or identify you personally.</p>
+
+            <h2 data-translate="privacyH3">Contact Us</h2>
+            <p data-translate="privacyP5">If you have any questions or concerns regarding our privacy practices, please feel free to reach out to us.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p data-translate="footerText">&copy; 2026 Just Breathe. Built for clarity and peace of mind.</p>
+        <div class="footer-links">
+            <a href="#" onclick="showPage('about'); return false;" data-translate="navAbout">About</a>
+            <a href="#" onclick="showPage('privacy'); return false;" data-translate="navPrivacy">Privacy Policy</a>
+        </div>
+    </footer>
+
+    <script>
+        const translations = {
+            en: {
+                labelDuration: "Session length:",
+                labelTiming: "Breathing pace:",
+                dur2: "2 minutes",
+                dur5: "5 minutes",
+                dur10: "10 minutes",
+                durInf: "No limit",
+                rit3: "3 sec (Relaxed)",
+                rit4: "4 sec (Standard)",
+                rit6: "6 sec (Deep)",
+                ready: "Ready?",
+                prepare: "Get ready",
+                paused: "Paused",
+                resume: "Resume",
+                pauseBtn: "Pause",
+                restartBtn: "Restart",
+                beginBtn: "Start breathing",
+                startAgain: "Start again",
+                sessionComplete: "Session complete",
+                inhale: "Inhale",
+                hold: "Hold",
+                exhale: "Exhale",
+                continuous: "Open-ended practice",
+                remaining: "left",
+                sec1Title: "What is box breathing?",
+                sec1Text: "Box breathing is a simple, highly effective technique to reset your nervous system when things feel overwhelming. By breaking your breath down into four equal parts—inhaling, holding, exhaling, and holding again—it brings your mind back to the present moment and helps settle racing thoughts.",
+                sec2Title: "How the 4-4-4-4 technique works",
+                sec2Text: "You don't need any special gear or experience. Just follow the visual rings on your screen through these four simple steps:",
+                step1Name: "Inhale:",
+                step1Desc: "Breathe in steadily through your nose, filling your lungs completely for four seconds.",
+                step2Name: "Hold:",
+                step2Desc: "Keep the air comfortably inside your lungs for another four seconds.",
+                step3Name: "Exhale:",
+                step3Desc: "Release the air smoothly and gently through your mouth over four seconds.",
+                step4Name: "Hold:",
+                step4Desc: "Pause with empty lungs for four seconds before starting the next round.",
+                sec3Title: "Why take a moment to breathe?",
+                sec3Text: "Life moves fast, and it's easy to live in a state of low-key tension without realizing it. Taking just a few minutes out of your day for guided breathing sends a clear signal to your body that it's safe to slow down, lowering stress and clearing out mental clutter instantly.",
+                footerText: "© 2026 Just Breathe. Built for clarity and peace of mind.",
+                navAbout: "About",
+                navPrivacy: "Privacy Policy",
+                aboutTitle: "About Just Breathe",
+                aboutP1: "Just Breathe was created with a singular mission: to provide a completely clean, distraction-free space where anyone can pause, reset, and center their mind within seconds.",
+                aboutP2: "In a world full of constant notifications, rushing schedules, and digital noise, taking a controlled pause is one of the most powerful tools available for mental wellness. The box breathing technique (or 4-4-4-4 method) has been used for decades by elite performers, meditators, and wellness practitioners to regulate the nervous system and regain clarity.",
+                aboutH2: "Our Philosophy",
+                aboutP3: "We believe mindfulness tools should be effortless to access. No sign-ups, no clutter, no intrusive paywalls—just open the app, follow the visual rhythm, and find your peace.",
+                privacyTitle: "Privacy Policy",
+                privacyP1: "Last updated: June 2026",
+                privacyP2: "At Just Breathe, your privacy is our utmost priority. Because our application functions entirely client-side to help you relax, we operate under a strict philosophy of data minimization.",
+                privacyH1: "Information We Do Not Collect",
+                privacyP3: "We do not collect, store, or process any personal data, health metrics, or breathing session histories on external servers. Your usage of the timer stays entirely on your device.",
+                privacyH2: "Cookies and Analytics",
+                privacyP4: "We may use basic, privacy-respecting analytical tools to measure general traffic numbers and improve our website's performance. These tools do not track you across other websites or identify you personally.",
+                privacyH3: "Contact Us",
+                privacyP5: "If you have any questions or concerns regarding our privacy practices, please feel free to reach out to us."
+            },
+            es: {
+                labelDuration: "Duración:",
+                labelTiming: "Ritmo:",
+                dur2: "2 minutos",
+                dur5: "5 minutos",
+                dur10: "10 minutos",
+                durInf: "Sin límite",
+                rit3: "3 s (Relajado)",
+                rit4: "4 s (Estándar)",
+                rit6: "6 s (Profundo)",
+                ready: "¿Listo?",
+                prepare: "Prepárate",
+                paused: "En pausa",
+                resume: "Reanudar",
+                pauseBtn: "Pausar",
+                restartBtn: "Reiniciar",
+                beginBtn: "Empezar",
+                startAgain: "Empezar de nuevo",
+                sessionComplete: "¡Listo!",
+                inhale: "Inhala",
+                hold: "Mantén",
+                exhale: "Exhala",
+                continuous: "Práctica libre",
+                remaining: "restantes",
+                sec1Title: "¿Qué es la respiración en caja?",
+                sec1Text: "Es una técnica sencilla y muy eficaz para calmar tu sistema nervioso cuando hay mucho estrés. Al dividir la respiración en cuatro partes iguales (inhalar, retener, exhalar y retener), ayudas a tu mente a volver al presente.",
+                sec2Title: "Cómo funciona la técnica 4-4-4-4",
+                sec2Text: "No necesitas nada especial, solo sigue los círculos en la pantalla paso a paso:",
+                step1Name: "Inhala:",
+                step1Desc: "Toma aire despacio por la nariz durante cuatro segundos.",
+                step2Name: "Mantén:",
+                step2Desc: "Conserva el aire en tus pulmones otros cuatro segundos.",
+                step3Name: "Exhala:",
+                step3Desc: "Saca el aire con calma por la boca durante cuatro segundos.",
+                step4Name: "Mantén:",
+                step4Desc: "Quédate con los pulmones vacíos cuatro segundos antes de repetir.",
+                sec3Title: "Por qué tomarse un respiro",
+                sec3Text: "El día a día puede acumular tensión sin que lo notes. Dedicar unos minutos a respirar de forma consciente le avisa a tu cuerpo que puede bajar el ritmo, ayudándote a relajar la mente al instante.",
+                footerText: "© 2026 Just Breathe. Diseñado para darte un momento de paz.",
+                navAbout: "Acerca de",
+                navPrivacy: "Política de Privacidad",
+                aboutTitle: "Acerca de Just Breathe",
+                aboutP1: "Just Breathe nació con una misión clara: ofrecer un espacio limpio y libre de distracciones donde cualquier persona pueda pausar, reiniciar y centrar su mente en segundos.",
+                aboutP2: "En un mundo lleno de notificaciones y ruido digital, hacer una pausa controlada es una de las herramientas más potentes para el bienestar mental.",
+                aboutH2: "Nuestra Filosofía",
+                aboutP3: "Creemos que las herramientas de bienestar deben ser accesibles para todos, sin registros ni complicaciones.",
+                privacyTitle: "Política de Privacidad",
+                privacyP1: "Última actualización: Junio de 2026",
+                privacyP2: "En Just Breathe, tu privacidad es nuestra máxima prioridad.",
+                privacyH1: "Información que no recopilamos",
+                privacyP3: "No almacenamos ningún dato personal ni historial de sesiones en servidores externos.",
+                privacyH2: "Cookies y Analítica",
+                privacyP4: "Podemos usar herramientas de análisis básicas y respetuosas con la privacidad para medir el tráfico general.",
+                privacyH3: "Contáctanos",
+                privacyP5: "Si tienes alguna pregunta, no dudes en contactarnos."
+            },
+            "zh-TW": {
+                labelDuration: "練習時間：",
+                labelTiming: "呼吸節奏：",
+                dur2: "2 分鐘",
+                dur5: "5 分鐘",
+                dur10: "10 分鐘",
+                durInf: "不限時間",
+                rit3: "3 秒（放鬆）",
+                rit4: "4 秒（標準）",
+                rit6: "6 秒（深呼吸）",
+                ready: "準備好了嗎？",
+                prepare: "準備開始",
+                paused: "已暫停",
+                resume: "繼續",
+                pauseBtn: "暫停",
+                restartBtn: "重新開始",
+                beginBtn: "開始呼吸",
+                startAgain: "再次開始",
+                sessionComplete: "練習完成",
+                inhale: "吸氣",
+                hold: "憋氣",
+                exhale: "吐氣",
+                continuous: "自由練習",
+                remaining: "剩餘",
+                sec1Title: "什麼是方框呼吸法？",
+                sec1Text: "方框呼吸法是一種能迅速安撫神經系統的實用技巧。將呼吸拆解為吸氣、憋氣、吐氣、憋氣四個均等步驟，能幫助你把雜亂的思緒拉回當下，找回平靜。",
+                sec2Title: "4-4-4-4 技巧怎麼做？",
+                sec2Text: "不需要任何基礎，只要跟著畫面上的圓圈一起調整節奏：",
+                step1Name: "吸氣：",
+                step1Desc: "用鼻子緩慢吸氣，讓空氣充滿肺部，持續四秒鐘。",
+                step2Name: "憋氣：",
+                step2Desc: "保持胸腔擴張，舒服地閉氣四秒鐘。",
+                step3Name: "吐氣：",
+                step3Desc: "透過嘴巴把氣慢慢吐乾淨，持續四秒鐘。",
+                step4Name: "憋氣：",
+                step4Desc: "維持肺部空無的狀態四秒鐘，準備進入下一個循環。",
+                sec3Title: "為什麼需要練習呼吸？",
+                sec3Text: "生活步調緊湊，我們常在不知不覺中累積了壓力。每天花短短幾分鐘專注呼吸，能給身體一個「可以放輕鬆」的訊號，快速卸下心靈的疲憊。",
+                footerText: "© 2026 Just Breathe. 專為內心平靜而設計。",
+                navAbout: "關於我們",
+                navPrivacy: "隱私權政策",
+                aboutTitle: "關於 Just Breathe",
+                aboutP1: "Just Breathe 的創立宗旨非常簡單：提供一個完全乾淨、無干擾的空間，讓任何人都能在幾秒鐘內暫停、重置並定下心神。",
+                aboutP2: "在充滿通知與數位噪音的世界裡，進行有意識的呼吸暫停是促進心理健康最有力的工具之一。",
+                aboutH2: "我們的理念",
+                aboutP3: "我們相信正念工具應該簡單易得。無需註冊、沒有花俏廣告——打開應用程式，跟隨節奏找到內心的平靜。",
+                privacyTitle: "隱私權政策",
+                privacyP1: "最後更新日期：2026 年 6 月",
+                privacyP2: "在 Just Breathe，您的隱私是我們的首要任務。我們的應用程式完全在您的設備端運行，嚴格遵守數據最小化原則。",
+                privacyH1: "我們不收集的資訊",
+                privacyP3: "我們不會在外部伺服器上收集、儲存或處理您的任何個人資料或呼吸練習歷史紀錄。",
+                privacyH2: "Cookie 與分析",
+                privacyP4: "我們可能會使用符合隱私規範的基本分析工具來衡量整體流量，以改善網站效能。",
+                privacyH3: "聯絡我們",
+                privacyP5: "如果您對隱私權實踐有任何疑問，歡迎隨時與我們聯繫。"
+            },
+            "zh-CN": {
+                labelDuration: "练习时间：",
+                labelTiming: "呼吸节奏：",
+                dur2: "2 分钟",
+                dur5: "5 分钟",
+                dur10: "10 分钟",
+                durInf: "不限时间",
+                rit3: "3 秒（放松）",
+                rit4: "4 秒（标准）",
+                rit6: "6 秒（深呼吸）",
+                ready: "准备好了吗？",
+                prepare: "准备开始",
+                paused: "已暂停",
+                resume: "继续",
+                pauseBtn: "暂停",
+                restartBtn: "重新开始",
+                beginBtn: "开始呼吸",
+                startAgain: "再次开始",
+                sessionComplete: "练习完成",
+                inhale: "吸气",
+                hold: "屏气",
+                exhale: "呼气",
+                continuous: "自由练习",
+                remaining: "剩余",
+                sec1Title: "什么是方框呼吸法？",
+                sec1Text: "方框呼吸法是一种能迅速安抚神经系统的实用技巧。将呼吸拆解为吸气、屏气、吐气、屏气四个均等步骤，能帮助你把杂乱的思绪拉回当下，找回平静。",
+                sec2Title: "4-4-4-4 技巧怎么做？",
+                sec2Text: "不需要任何基础，只要跟着画面上的圆圈一起调整节奏：",
+                step1Name: "吸气：",
+                step1Desc: "用鼻子缓慢吸气，让空气充满肺部，持续四秒钟。",
+                step2Name: "屏气：",
+                step2Desc: "保持胸腔扩张，舒适地闭气四秒钟。",
+                step3Name: "吐气：",
+                step3Desc: "通过嘴巴把气慢慢吐干净，持续四秒钟。",
+                step4Name: "屏气：",
+                step4Desc: "维持肺部空无的状态四秒钟，准备进入下一个循环。",
+                sec3Title: "为什么需要练习呼吸？",
+                sec3Text: "生活步调紧凑，我们常在不知不觉中积累了压力。每天花短短几分钟专注呼吸，能给身体一个“可以放轻松”的信号，快速卸下心灵的疲惫。",
+                footerText: "© 2026 Just Breathe. 专为内心平静而设计。",
+                navAbout: "关于我们",
+                navPrivacy: "隐私政策",
+                aboutTitle: "关于 Just Breathe",
+                aboutP1: "Just Breathe 的创立宗旨非常简单：提供一个完全干净、无干扰的空间，让任何人都能在几秒钟内暂停、重置并定下心神。",
+                aboutP2: "在充满通知与数字噪音的世界里，进行有意识的呼吸暂停是促进心理健康最有力的工具之一。",
+                aboutH2: "我们的理念",
+                aboutP3: "我们相信正念工具应该简单易得。无需注册、没有花哨广告——打开应用，跟随节奏找到内心的平静。",
+                privacyTitle: "隐私政策",
+                privacyP1: "最后更新日期：2026 年 6 月",
+                privacyP2: "在 Just Breathe，您的隐私是我们的首要任务。我们的应用完全在您的设备端运行，严格遵守数据最小化原则。",
+                privacyH1: "我们不收集的信息",
+                privacyP3: "我们不会在外部服务器上收集、存储或处理您的任何个人资料或呼吸练习历史记录。",
+                privacyH2: "Cookie 与分析",
+                privacyP4: "我们可能会使用符合隐私规范的基本分析工具来衡量整体流量，以改善网站性能。",
+                privacyH3: "联系我们",
+                privacyP5: "如果您对隐私权实践有任何疑问，欢迎随时与我们联系。"
+            },
+            ja: {
+                labelDuration: "時間:",
+                labelTiming: "ペース:",
+                dur2: "2分",
+                dur5: "5分",
+                dur10: "10分",
+                durInf: "制限なし",
+                rit3: "3秒 (リラックス)",
+                rit4: "4秒 (標準)",
+                rit6: "6秒 (ゆっくり)",
+                ready: "準備はいいですか？",
+                prepare: "まもなく開始",
+                paused: "一時停止中",
+                resume: "再開",
+                pauseBtn: "一時停止",
+                restartBtn: "やり直す",
+                beginBtn: "呼吸を始める",
+                startAgain: "もう一度",
+                sessionComplete: "お疲れ様でした",
+                inhale: "吸う",
+                hold: "止める",
+                exhale: "吐く",
+                continuous: "自由練習",
+                remaining: "残り",
+                sec1Title: "ボックス呼吸とは？",
+                sec1Text: "忙しい日常の中で緊張をほぐし、心を落ち着かせるためのシンプルな呼吸法です。「吸う・止める・吐く・止める」を同じリズムで繰り返すことで、思考がクリアになります。",
+                sec2Title: "4-4-4-4のやり方",
+                sec2Text: "特別な準備はいりません。画面の輪の動きに合わせて進めましょう：",
+                step1Name: "吸う：",
+                step1Desc: "4秒かけて、鼻からゆっくりと空気を吸い込みます。",
+                step2Name: "止める：",
+                step2Desc: "その状態のまま4秒間息を止めます。",
+                step3Name: "吐く：",
+                step3Desc: "4秒かけて、口から優しく息を吐き出します。",
+                step4Name: "止める：",
+                step4Desc: "肺を空っぽにしたまま4秒待ってから、次のラウンドへ。",
+                sec3Title: "深呼吸のすすめ",
+                sec3Text: "知らず知らずのうちに力が入ってしまっている体に、数分間のリセットタイムを。心拍数が落ち着き、すっきりとリフレッシュできます。",
+                footerText: "© 2026 Just Breathe. 心安らぐ時間のために。",
+                navAbout: "概要",
+                navPrivacy: "プライバシーポリシー",
+                aboutTitle: "Just Breathe について",
+                aboutP1: "Just Breathe は、誰もが数秒で立ち止まり、心をリセットできる、完全にクリーンで邪魔のない空間を提供するために作られました。",
+                aboutP2: "情報過多な現代において、意識的な呼吸はメンタルヘルスを保つための強力な手段です。",
+                aboutH2: "私たちの哲学",
+                aboutP3: "マインドフルネスツールは、誰でも手軽に使えるべきだと信じています。",
+                privacyTitle: "プライバシーポリシー",
+                privacyP1: "最終更新日: 2026年6月",
+                privacyP2: "Just Breathe では、お客様のプライバシーを最優先に考えています。",
+                privacyH1: "収集しない情報",
+                privacyP3: "外部サーバーでの個人情報やセッション履歴の収集・保存は一切行いません。",
+                privacyH2: "Cookie と分析",
+                privacyP4: "サイトの改善を目的として、一般的なトラフィックを測定するプライバシー配慮型の分析ツールを使用する場合があります。",
+                privacyH3: "お問い合わせ",
+                privacyP5: "ご不明な点がございましたら、お気軽にお問い合わせください。"
+            },
+            ko: {
+                labelDuration: "세션 시간:",
+                labelTiming: "호흡 속도:",
+                dur2: "2분",
+                dur5: "5분",
+                dur10: "10분",
+                durInf: "시간 제한 없음",
+                rit3: "3초 (편안함)",
+                rit4: "4초 (표준)",
+                rit6: "6초 (깊게)",
+                ready: "준비되셨나요?",
+                prepare: "시작 전",
+                paused: "일시 정지",
+                resume: "계속하기",
+                pauseBtn: "일시 정지",
+                restartBtn: "처음부터",
+                beginBtn: "호흡 시작하기",
+                startAgain: "다시 하기",
+                sessionComplete: "완료되었습니다",
+                inhale: "숨 들이쉬기",
+                hold: "멈추기",
+                exhale: "숨 내쉬기",
+                continuous: "자유 연습",
+                remaining: "남음",
+                sec1Title: "박스 호흡법이란?",
+                sec1Text: "마음이 복잡할 때 신경계를 차분하게 정돈해주는 간단한 호흡법입니다. 들이쉬고, 참고, 내쉬고, 멈추는 네 가지 동작을 동일한 시간 동안 반복하며 현재에 집중하도록 돕습니다.",
+                sec2Title: "4-4-4-4 호흡 따라하기",
+                sec2Text: "복잡한 방법은 없습니다. 화면의 원이 움직이는 모양에 맞춰 호흡해보세요:",
+                step1Name: "들이쉬기:",
+                step1Desc: "코로 천천히 숨을 들이마시며 4초 동안 폐를 채웁니다.",
+                step2Name: "멈추기:",
+                step2Desc: "숨을 참은 상태로 편안하게 4초를 유지합니다.",
+                step3Name: "내쉬기:",
+                step3Desc: "입을 통해 부드럽게 4초 동안 숨을 내쉽니다.",
+                step4Name: "멈추기:",
+                step4Desc: "폐를 비운 상태로 4초간 멈춘 뒤 다음 단계를 시작합니다.",
+                sec3Title: "잠깐의 숨 고르기가 필요한 이유",
+                sec3Text: "바쁘게 달리다 보면 나도 모르게 긴장하게 됩니다. 하루에 몇 분만 투자해 호흡에 집중하면 몸과 마음에 편안한 휴식을 선물할 수 있습니다.",
+                footerText: "© 2026 Just Breathe. 마음의 여유를 위해.",
+                navAbout: "소개",
+                navPrivacy: "개인정보 처리방침",
+                aboutTitle: "Just Breathe 소개",
+                aboutP1: "Just Breathe는 누구나 몇 초 만에 마음을 정돈하고 휴식을 취할 수 있는 방해 없는 공간을 제공하기 위해 만들어졌습니다.",
+                aboutP2: "끊임없는 알림과 디지털 소음 속에서 호흡을 가다듬는 것은 정신 건강을 위한 강력한 도구입니다.",
+                aboutH2: "우리의 철학",
+                aboutP3: "명상 도구는 누구나 쉽게 접근할 수 있어야 합니다. 가입도, 복잡한 설정도 필요 없습니다.",
+                privacyTitle: "개인정보 처리방침",
+                privacyP1: "최종 수정일: 2026년 6월",
+                privacyP2: "Just Breathe는 사용자 분들의 개인정보를 최우선으로 생각합니다.",
+                privacyH1: "수집하지 않는 정보",
+                privacyP3: "저희는 외부 서버에 개인 데이터나 호흡 세션 기록을 수집하거나 저장하지 않습니다.",
+                privacyH2: "쿠키 및 분석",
+                privacyP4: "웹사이트 성능 개선을 위해 프라이버시를 존중하는 기본 분석 도구를 사용할 수 있습니다.",
+                privacyH3: "문의하기",
+                privacyP5: "개인정보 보호 관행과 관련해 궁금한 점이 있으시면 언제든지 문의해 주세요."
+            },
+            ar: {
+                labelDuration: "مدة الجلسة:",
+                labelTiming: "إيقاع التنفس:",
+                dur2: "دقيقتان",
+                dur5: "5 دقائق",
+                dur10: "10 دقائق",
+                durInf: "بلا قيود",
+                rit3: "3 ثوانٍ (مريح)",
+                rit4: "4 ثوانٍ (قياسي)",
+                rit6: "6 ثوانٍ (عميق)",
+                ready: "هل أنت مستعد؟",
+                prepare: "استعد",
+                paused: "متوقف مؤقتاً",
+                resume: "استئناف",
+                pauseBtn: "إيقاف",
+                restartBtn: "إعادة",
+                beginBtn: "ابدأ التنفس",
+                startAgain: "البدء مجدداً",
+                sessionComplete: "انتهت الجلسة",
+                inhale: "شهيق",
+                hold: "حبس",
+                exhale: "زفير",
+                continuous: "ممارسة حرة",
+                remaining: "متبقي",
+                sec1Title: "ما هو التنفس الصندوقي؟",
+                sec1Text: "هو طريقة بسيطة وفعالة لتهدئة الأعصاب عندما تشعر بالإرهاق. من خلال تقسيم التنفس إلى أجزاء متساوية (شهيق، حبس، زفير، حبس)، فإنه يساعد عقلك على العودة لللحظة الحالية.",
+                sec2Title: "كيف تمارس طريقة 4-4-4-4",
+                sec2Text: "لا تحتاج لأي أدوات، فقط اتبع الحلقات البصرية على الشاشة بخطوات بسيطة:",
+                step1Name: "شهيق:",
+                step1Desc: "خذ نفساً عميقاً وبطيئاً من أنفك لمدة أربع ثوانٍ.",
+                step2Name: "حبس النفس:",
+                step2Desc: "احتفظ بالهواء داخل رئتيك براحة لأربع ثوانٍ أخرى.",
+                step3Name: "زفير:",
+                step3Desc: "أخرج الهواء بسلاسة من فمك خلال أربع ثوانٍ.",
+                step4Name: "حبس النفس:",
+                step4Desc: "ابقَ برئتيك فارغتين لأربع ثوانٍ قبل البدء بالجولة التالية.",
+                sec3Title: "لماذا تحتاج لتخصيص وقت للتنفس؟",
+                sec3Text: "الحياة سريعة، ومن السهل أن تعيش في حالة توتر دون أن تشعر. تخصيص بضع دقائق يومياً للتنفس الواعي يرسل إشارة لجسدك بأن الوقت قد حان للهدوء وتصفية الذهن.",
+                footerText: "© 2026 Just Breathe. صُمم ليمنحك لحظات من راحة البال.",
+                navAbout: "حول التطبيق",
+                navPrivacy: "سياسة الخصوصية",
+                aboutTitle: "عن Just Breathe",
+                aboutP1: "تم إنشاء Just Breathe بهدف أساسي: توفير مساحة نظيفة وخالية تماماً من المشتتات حيث يمكن لأي شخص التوقف وإعادة ضبط ذهنه في ثوانٍ معدودة.",
+                aboutP2: "في عالم مليء بالإشعارات وضوضاء الإنترنت، يعد أخذ استراحة واعية أحد أقوى الأدوات المتاحة للسلام النفسي.",
+                aboutH2: "فلسفتنا",
+                aboutP3: "نؤمن بأن أدوات اليقظة الذهنية يجب أن تكون في متناول الجميع وبكل سهولة.",
+                privacyTitle: "سياسة الخصوصية",
+                privacyP1: "آخر تحديث: يونيو 2026",
+                privacyP2: "في Just Breathe، خصوصيتك هي أولويتنا القصوى.",
+                privacyH1: "المعلومات التي لا نجمعها",
+                privacyP3: "نحن لا نجمع أو نُخزن أي بيانات شخصية أو سجلات جلسات على خوادم خارجية.",
+                privacyH2: "ملفات تعريف الارتباط والتحليلات",
+                privacyP4: "قد نستخدم أدوات تحليلات أساسية تحترم خصوصيتك لقياس حركة المرور العامة وتحسين الأداء.",
+                privacyH3: "اتصل بنا",
+                privacyP5: "إذا كان لديك أي أسئلة أو استفسارات حول ممارسات الخصوصية الخاصة بنا، فلا تتردد في الاتصال بنا."
+            }
+        };
+
+        let currentLang = 'en';
+
+        function togglePanel(type) {
+            if (isRunning) return;
+            const settingsPanel = document.getElementById('settingsPanel');
+            const langPanel = document.getElementById('langPanel');
+            const settingsToggle = document.getElementById('settingsToggle');
+            const langToggle = document.getElementById('langToggle');
+
+            if (type === 'settings') {
+                const isOpen = settingsPanel.classList.contains('active');
+                settingsPanel.classList.remove('active');
+                langPanel.classList.remove('active');
+                settingsToggle.classList.remove('active');
+                langToggle.classList.remove('active');
+                if (!isOpen) {
+                    settingsPanel.classList.add('active');
+                    settingsToggle.classList.add('active');
+                }
+            } else if (type === 'lang') {
+                const isOpen = langPanel.classList.contains('active');
+                settingsPanel.classList.remove('active');
+                langPanel.classList.remove('active');
+                settingsToggle.classList.remove('active');
+                langToggle.classList.remove('active');
+                if (!isOpen) {
+                    langPanel.classList.add('active');
+                    langToggle.classList.add('active');
+                }
+            }
+        }
+
+        function changeLanguage(lang, btnElement) {
+            currentLang = lang;
+            const t = translations[lang];
+
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            if (btnElement) btnElement.classList.add('active');
+
+            if (lang === 'ar') {
+                document.documentElement.setAttribute('dir', 'rtl');
+            } else {
+                document.documentElement.setAttribute('dir', 'ltr');
+            }
+
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (t[key]) {
+                    el.textContent = t[key];
+                }
+            });
+
+            if (isPaused) {
+                pauseBtn.textContent = t.resume;
+                instruction.textContent = t.paused;
+            } else if (!isRunning && !preparationActive) {
+                instruction.textContent = t.ready;
+            }
+        }
+
+        function showPage(pageName) {
+            document.getElementById('homeView').style.display = 'none';
+            document.querySelector('.seo-content-wrapper').style.display = 'none';
+            document.getElementById('aboutView').classList.remove('active');
+            document.getElementById('privacyView').classList.remove('active');
+
+            if (pageName === 'about') {
+                document.getElementById('aboutView').classList.add('active');
+            } else if (pageName === 'privacy') {
+                document.getElementById('privacyView').classList.add('active');
+            }
+            window.scrollTo(0, 0);
+        }
+
+        function showHome() {
+            document.getElementById('aboutView').classList.remove('active');
+            document.getElementById('privacyView').classList.remove('active');
+            document.getElementById('homeView').style.display = 'flex';
+            document.querySelector('.seo-content-wrapper').style.display = 'flex';
+            window.scrollTo(0, 0);
+        }
+
+        const glow = document.getElementById('glow');
+        const ring1 = document.getElementById('ring1');
+        const ring2 = document.getElementById('ring2');
+        const ring3 = document.getElementById('ring3');
+        const timerDisplay = document.getElementById('timer');
+        const instruction = document.getElementById('instruction');
+        const sessionTimeDisplay = document.getElementById('session-time');
+        const mainBtn = document.getElementById('mainBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        
+        let isRunning = false;
+        let isPaused = false;
+        let preparationActive = false;
+        let breathingInterval = null;
+        let sessionTimeout = null;
+        let totalSecondsRemaining = 300;
+        let currentDurationSetting = 300;
+        let boxTiming = 4;
+        let activePhaseIndex = 0;
+        let phaseTimeRemaining = 0;
+
+        function updateDuration() {
+            const val = parseInt(document.getElementById('durationSelect').value);
+            currentDurationSetting = val;
+            totalSecondsRemaining = val;
+        }
+
+        function updateTiming() {
+            boxTiming = parseInt(document.getElementById('timingSelect').value);
+        }
+
+        function formatTime(totalSecs) {
+            const mins = Math.floor(totalSecs / 60);
+            const secs = totalSecs % 60;
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        function handleMainAction() {
+            if (!isRunning && !isPaused) {
+                startSession();
+            }
+        }
+
+        function startSession() {
+            isRunning = true;
+            isPaused = false;
+            preparationActive = true;
+            
+            togglePanel('closeAll');
+            document.getElementById('settingsPanel').classList.remove('active');
+            document.getElementById('langPanel').classList.remove('active');
+            document.getElementById('settingsToggle').classList.remove('active');
+            document.getElementById('langToggle').classList.remove('active');
+
+            mainBtn.classList.add('hidden');
+            pauseBtn.classList.remove('hidden');
+            restartBtn.classList.remove('hidden');
+
+            totalSecondsRemaining = currentDurationSetting;
+            
+            let prepCount = 3;
+            instruction.textContent = translations[currentLang].prepare;
+            timerDisplay.textContent = prepCount;
+
+            const prepInterval = setInterval(() => {
+                prepCount--;
+                if (prepCount > 0) {
+                    timerDisplay.textContent = prepCount;
+                } else {
+                    clearInterval(prepInterval);
+                    preparationActive = false;
+                    beginBreathingCycle();
+                }
+            }, 1000);
+        }
+
+        function beginBreathingCycle() {
+            if (!isRunning || isPaused) return;
+
+            const phases = [
+                { name: translations[currentLang].inhale, duration: boxTiming, scale: 1.4 },
+                { name: translations[currentLang].hold, duration: boxTiming, scale: 1.4 },
+                { name: translations[currentLang].exhale, duration: boxTiming, scale: 1 },
+                { name: translations[currentLang].hold, duration: boxTiming, scale: 1 }
+            ];
+
+            activePhaseIndex = 0;
+            
+            if (currentDurationSetting < 999999) {
+                sessionTimeDisplay.textContent = `${formatTime(totalSecondsRemaining)} ${translations[currentLang].remaining}`;
+            } else {
+                sessionTimeDisplay.textContent = translations[currentLang].continuous;
+            }
+
+            runPhase(phases);
+
+            breathingInterval = setInterval(() => {
+                if (isPaused) return;
+
+                if (currentDurationSetting < 999999) {
+                    totalSecondsRemaining--;
+                    if (totalSecondsRemaining <= 0) {
+                        endSession();
+                        return;
+                    }
+                    sessionTimeDisplay.textContent = `${formatTime(totalSecondsRemaining)} ${translations[currentLang].remaining}`;
+                }
+            }, 1000);
+        }
+
+        function runPhase(phases) {
+            if (!isRunning || isPaused) return;
+
+            const currentPhase = phases[activePhaseIndex];
+            instruction.textContent = currentPhase.name;
+            phaseTimeRemaining = currentPhase.duration;
+            timerDisplay.textContent = phaseTimeRemaining;
+
+            applyVisualScale(currentPhase.scale, currentPhase.duration);
+
+            const phaseInterval = setInterval(() => {
+                if (isPaused) return;
+
+                phaseTimeRemaining--;
+                if (phaseTimeRemaining > 0) {
+                    timerDisplay.textContent = phaseTimeRemaining;
+                } else {
+                    clearInterval(phaseInterval);
+                    if (isRunning && !isPaused) {
+                        activePhaseIndex = (activePhaseIndex + 1) % phases.length;
+                        runPhase(phases);
+                    }
+                }
+            }, 1000);
+            
+            window.activePhaseInterval = phaseInterval;
+        }
+
+        function applyVisualScale(scale, duration) {
+            ring1.style.transform = `scale(${scale})`;
+            ring2.style.transform = `scale(${scale * 0.9})`;
+            ring3.style.transform = `scale(${scale * 0.8})`;
+            glow.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            ring1.style.transitionDuration = `${duration}s`;
+            ring2.style.transitionDuration = `${duration}s`;
+            ring3.style.transitionDuration = `${duration}s`;
+            glow.style.transitionDuration = `${duration}s`;
+        }
+
+        function togglePause() {
+            if (!isRunning) return;
+            const t = translations[currentLang];
+
+            if (!isPaused) {
+                isPaused = true;
+                clearInterval(breathingInterval);
+                if (window.activePhaseInterval) clearInterval(window.activePhaseInterval);
+                pauseBtn.textContent = t.resume;
+                instruction.textContent = t.paused;
+            } else {
+                isPaused = false;
+                pauseBtn.textContent = t.pauseBtn;
+                beginBreathingCycle();
+            }
+        }
+
+        function restartSession() {
+            endSession();
+            startSession();
+        }
+
+        function endSession() {
+            isRunning = false;
+            isPaused = false;
+            preparationActive = false;
+            clearInterval(breathingInterval);
+            if (window.activePhaseInterval) clearInterval(window.activePhaseInterval);
+
+            instruction.textContent = translations[currentLang].sessionComplete;
+            timerDisplay.textContent = "✓";
+            sessionTimeDisplay.textContent = "";
+
+            applyVisualScale(1, 1);
+
+            mainBtn.textContent = translations[currentLang].startAgain;
+            mainBtn.classList.remove('hidden');
+            pauseBtn.classList.add('hidden');
+            restartBtn.classList.add('hidden');
+            pauseBtn.textContent = translations[currentLang].pauseBtn;
+        }
+    </script>
+</body>
+</html>
